@@ -1,6 +1,7 @@
 import Phaser, { Rectangle } from "phaser";
-import CarPhysics, { InputState } from "./lib/CarPhysics";
+import { InputState } from "./lib/CarPhysics";
 import carImage from "./assets/car.svg";
+import Car from "./Car";
 
 let config = {
   type: Phaser.AUTO,
@@ -19,9 +20,7 @@ let config = {
   }
 };
 
-const noop = () => {};
 let game = new Phaser.Game(config);
-let carPhysics;
 let car;
 let cursors;
 let prevTime = new Date();
@@ -32,14 +31,18 @@ function preload() {
 
 function create() {
   this.matter.world.setBounds().disableGravity();
-  carPhysics = new CarPhysics({
-    stats: { clear: noop, add: noop },
+  car = new Car({
     x: 55,
     y: 30,
-    heading: -(90 * Math.PI) / 180
+    heading: -90,
+    scale: 10,
+    image: this.matter.add.image(0, 0, "car").setScale(0.05),
+    sensors: {
+      headSensor: this.add.line(0, 0, 0, 0, 200, 0, 0xff66ff),
+      headRightSensor: this.add.line(0, 0, 0, 0, 140, 0, 0xff66ff),
+      headLeftSensor: this.add.line(0, 0, 0, 0, 140, 0, 0xff66ff)
+    }
   });
-  car = this.matter.add.image(0, 0, "car");
-  car.setScale(0.05);
   cursors = this.input.keyboard.createCursorKeys();
 }
 
@@ -58,14 +61,6 @@ function update() {
     inputState.brake = 1;
   }
   const currTime = new Date();
-  carPhysics.setInputs(inputState);
-  carPhysics.update(currTime - prevTime);
+  car.update(inputState, currTime - prevTime);
   prevTime = currTime;
-
-  const {
-    heading,
-    position: { x, y }
-  } = carPhysics;
-  car.setAngle((carPhysics.heading * 180) / Math.PI);
-  car.setPosition(x * 10, y * 10);
 }
